@@ -567,7 +567,7 @@ class SSF_LOCALE:
                                         locale.months['format']['wide'][month]))
                 self.months_leap = self.months
             if locale:
-                self.decimal_point = decimal_separator or locale.number_symbols['decimal']
+                self.decimal_point = decimal_separator or locale.number_symbols.get('decimal') or locale.number_symbols.get('latn', {}).get('decimal')
                 self.thousands_sep = thousands_separator or locale.number_symbols['group']
                 self.plus_sign = locale.number_symbols['plusSign']
                 self.minus_sign = locale.number_symbols['minusSign']
