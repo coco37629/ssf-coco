@@ -4,7 +4,7 @@
 from ssf import SSF
 import json
 from datetime import date
-ssf = SSF()
+ssf = SSF(locale='en_US')
 #var fs = require('fs'), assert = require('assert');
 #var data = JSON.parse(fs.readFileSync('./test/general.json','utf8'));
 with open('tests/general.json', 'r', encoding='utf-8') as d:

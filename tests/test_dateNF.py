@@ -3,7 +3,7 @@
 #/*eslint-env mocha, node */
 #var SSF = require('../');
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 #var assert = require('assert');
 #describe('dateNF override', function() {
 def test_dateNF():

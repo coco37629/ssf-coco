@@ -1,5 +1,5 @@
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 from datetime import date
 import os
 import re

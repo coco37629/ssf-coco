@@ -2,7 +2,7 @@
 #/*jshint loopfunc:true, mocha:true, node:true */
 #var SSF = require('../');
 from ssf import SSF
-ssf = SSF(errors='raise')
+ssf = SSF(errors='raise', locale='en_US')
 import warnings
 import re
 

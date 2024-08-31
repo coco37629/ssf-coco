@@ -4,7 +4,7 @@
 
 from ssf import SSF
 
-ssf = SSF()
+ssf = SSF(locale='en_US')
 
 def test_issue_8():     # International support
     assert ssf.format('#,###.00', 1000000, locale='de-DE') == '1.000.000,00'

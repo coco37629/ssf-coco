@@ -3,7 +3,7 @@
 #var SSF = require('../');
 from ssf import SSF
 import json
-ssf = SSF(errors='raise')
+ssf = SSF(errors='raise', locale='en_US')
 #var fs = require('fs'), assert = require('assert');
 #var data = JSON.parse(fs.readFileSync('./test/oddities.json','utf8'));
 with open('tests/oddities.json', 'r', encoding='utf-8') as d:

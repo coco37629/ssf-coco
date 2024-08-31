@@ -3,7 +3,7 @@
 #var SSF = require('../');
 from ssf import SSF
 import json
-ssf = SSF()
+ssf = SSF(locale='en_US')
 #var fs = require('fs'), assert = require('assert');
 #var data = JSON.parse(fs.readFileSync('./test/fraction.json','utf8'));
 with open('tests/fraction.json', 'r', encoding='utf-8') as d:

@@ -1,7 +1,7 @@
 from ssf import SSF
 from datetime import datetime, date, timedelta, time
 
-ssf = SSF(errors='raise')
+ssf = SSF(errors='raise', locale='en_US')
 
 def test_code_coverage1():
     """Tests to improve code coverage."""
@@ -88,8 +88,8 @@ def test_code_coverage2():
     assert ssf.format('[$-1E000000]0.00E+00', -1.23E-45) == '-一.二三五万四五'
 
     # _get_locale
-    ssfi = SSF(errors='ignore')
-    assert ssfi.format('#,###,###.##', 1000.1, locale='deDE') == '1,000.1'      # Bad locale - ignored
+    ssfi = SSF(errors='ignore', locale='en_US')
+    assert ssfi.format('#,###,###.##', 1000.1, locale='en_US') == '1,000.1'      # Bad locale - ignored
 
     try:
         ssf.format('#,###,###.##', 1000.1, locale='deDE')
@@ -103,7 +103,7 @@ def test_code_coverage2():
 
     assert ssf.format(1024, 1025) == '1025'     # Incorrect format number defaults to General
 
-    ssfp = SSF(errors='#')
+    ssfp = SSF(errors='#', locale='en_US')
     assert ssfp.format('[red', 0) == '##########'
 
     # SSF_CALENDAR

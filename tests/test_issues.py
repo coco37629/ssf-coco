@@ -1,5 +1,5 @@
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 
 def test_issue_1():
     assert ssf.format('g', 1) == ''
@@ -62,7 +62,7 @@ def test_issue_10(monkeypatch):
         assert ssfu.format('#,###.00', 1234.56, locale='de-DE') == '1.234,56'
     finally:
         monkeypatch.setattr(locale, 'setlocale', real_setlocale)
-    
+
 def test_issue_11():
     assert ssf.format('[$kr]#,##0.00_-;[Red][$kr]#,##0.00-;[$kr]#,##0.00_-;@_-', -3.14) == 'kr3.14-'
 

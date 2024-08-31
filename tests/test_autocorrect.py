@@ -1,5 +1,5 @@
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 
 def test_autocorrect_format():
     assert ssf.format('0E0', 1e2) == '1E+2'

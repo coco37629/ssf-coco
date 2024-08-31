@@ -8,7 +8,7 @@ from .number import Number
 with open('tests/comma.tsv', 'r', encoding='utf-8') as d:
     data = d.read().split("\n")
 
-ssf = SSF()
+ssf = SSF(locale='en_US')
 
 #
 #function doit(w, headers) {

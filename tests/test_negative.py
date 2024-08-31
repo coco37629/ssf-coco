@@ -4,7 +4,7 @@
 #var SSF = require('../');
 
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 
 #var assert = require('assert');
 

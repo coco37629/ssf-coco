@@ -142,7 +142,7 @@ class SSF_CALENDAR:         # Issue #6
             value = int.from_bytes(SSF_CALENDAR.lunar_bin[ndx:ndx+3], byteorder='big')
         except Exception:
             value = 0
-        result = SimpleNamespace(year=(value>>10)+1899, month=(value>>6)&0xF, 
+        result = SimpleNamespace(year=(value>>10)+1899, month=(value>>6)&0xF,
                                  day=(value>>1)&0x1F, isleap=value&1, era=None)
         #result = Converter.Solar2Lunar(Solar(*ymd))
         #result.era = None
@@ -237,7 +237,7 @@ class SSF_CALENDAR:         # Issue #6
         self.calendar_code = calendar
         _calendar_converter = [None, None, None, self.to_japanese, self.to_taiwan, self.to_korean,
             self.to_hijri, self.to_thai_buddhist, self.to_jewish, None, None, None, None, None, self.to_lunar_x0e,
-            None, None, self.to_lunar_x11, self.to_lunar_x12, self.to_chinese_lunar, None, None, None, 
+            None, None, self.to_lunar_x11, self.to_lunar_x12, self.to_chinese_lunar, None, None, None,
             self.to_um_al_qura, None, None, None, None, None, None, None, None]
         self.converter = self.to_default
         try:
@@ -493,7 +493,7 @@ class SSF_LOCALE:
                         except Exception:       # v0.2.1: Handle unix-based locales by changing '-' to '_' and doing some lookups
                             locale2 = locale.replace('-', '_')
                             linux_lang_map = dict(nb="bokmal", ca="catalan", hr="croatian", cs="czech", da="danish", de="deutsch",
-                                nl="dutch", et="estonian", fi="finnish", fr="french", gl="galician", el="greek", he="hebrew", hu="hungarian", 
+                                nl="dutch", et="estonian", fi="finnish", fr="french", gl="galician", el="greek", he="hebrew", hu="hungarian",
                                 it="italian", ja="japanese", ko="korean", lt="lithuanian", no="norwegian", nn="nynorsk", pl="polish", pt="portuguese", ro="romanian",
                                 ru="russian", sk="slovak", sl="slovenian", es="spanish", sv="swedish", th="thai", tr="turkish")
                             linux_lang_map['is'] = 'icelandic'  # 'is' is a keyword
@@ -559,7 +559,7 @@ class SSF_LOCALE:
                 self.days = []
                 self.months = []
                 for day in (6, 0, 1, 2, 3, 4, 5):       # Start with SUN
-                    self.days.append((locale.days['format']['abbreviated'][day], 
+                    self.days.append((locale.days['format']['abbreviated'][day],
                                       locale.days['format']['wide'][day]))
                 for month in range(1, 12+1):
                     self.months.append((locale.months['format']['narrow'][month],
@@ -568,12 +568,12 @@ class SSF_LOCALE:
                 self.months_leap = self.months
             if locale:
                 self.decimal_point = decimal_separator or locale.number_symbols.get('decimal') or locale.number_symbols.get('latn', {}).get('decimal')
-                self.thousands_sep = thousands_separator or locale.number_symbols['group']
-                self.plus_sign = locale.number_symbols['plusSign']
-                self.minus_sign = locale.number_symbols['minusSign']
-                self.percent_sign = locale.number_symbols['percentSign']
-                self.time_separator = locale.number_symbols['timeSeparator']
-                self.exponential = locale.number_symbols['exponential']
+                self.thousands_sep = thousands_separator or locale.number_symbols.get('group') or locale.number_symbols.get('latn', {}).get('group')
+                self.plus_sign = locale.number_symbols.get('plusSign') or locale.number_symbols.get('latn', {}).get('plusSign')
+                self.minus_sign = locale.number_symbols.get('minusSign') or locale.number_symbols.get('latn', {}).get('minusSign')
+                self.percent_sign = locale.number_symbols.get('percentSign') or locale.number_symbols.get('latn', {}).get('percentSign')
+                self.time_separator = locale.number_symbols.get('timeSeparator') or locale.number_symbols.get('latn', {}).get('timeSeparator')
+                self.exponential = locale.number_symbols.get('exponential') or locale.number_symbols.get('latn', {}).get('exponential')
                 self.time_format = locale.time_formats['medium'].pattern.replace('a', 'AM/PM')
                 self.short_date_format = locale.date_formats['short'].pattern.replace('E', 'd'). \
                         replace('M', 'm')
@@ -638,14 +638,19 @@ class SSF_LOCALE:
             df = ls-ln
             return s[:df] + self.commaify(s[df:])
         if self.locale is not None:
+            locale_group = self.locale.number_symbols.get('group') or self.locale.number_symbols.get('latn', {}).get('group')
             if s[0] == '0':         # Special processing for leading zeros
                 i = int('1'+s)      # Protect them with a leading '1', which we later remove
                 result = format_decimal(i, locale=self.locale)
-                result = re.sub(r'^1(?:' + re.escape(self.locale.number_symbols['group']) + r')?(.*)$', r'\1', result)
+                result = re.sub(r'^1(?:' + re.escape(locale_group) + r')?(.*)$', r'\1', result)
             else:
                 result = format_decimal(int(s), locale=self.locale)
-            if self.thousands_sep != self.locale.number_symbols['group']:
-                result = result.replace(self.locale.number_symbols['group'], self.thousands_sep)
+
+            print(f"locale: {self.locale}")
+            print(f"current result: {result}")
+
+            if self.thousands_sep != locale_group:
+                result = result.replace(locale_group, self.thousands_sep)
             return result
 
         w = self.grouping[0] if len(self.grouping) >= 1 else 3
@@ -673,10 +678,10 @@ class SSF_LOCALE:
 class SSF:
     """Spreadsheet Formatter (number format). Formats values according to spreadsheet-style format codes.  If ``date1904``
     is True, then the base date is January 1, 1904, which was used on some spreadsheet programs for Mac.  The default (``False``),
-    means that the base date is December 31, 1899 (which spreadsheet programs call the 1900 date system).  
+    means that the base date is December 31, 1899 (which spreadsheet programs call the 1900 date system).
     The ``dateNF`` if not None, replaces the default Short Date format of `m/dd/yyyy`.  The
     ``table`` if not None, replaces the entire translation from ints to formats table.
-    
+
     The ``color_pre`` and ``color_post`` specify formats for values that are provided before and after the results that have
     a ``[ColorN]`` or color name e.g. ``[Red]`` specifier in the formats.  Any ``{}`` in the specified format are replaced by
     the specified color (in Title Case).  Any ``{rgb}`` in the formats are replaced with the hex color number (without a ``#``).
@@ -697,7 +702,7 @@ class SSF:
     def __init__(self, tzinfo=None, date1904=False, dateNF=None, table=None, color_pre=None, color_post=None,
             locale_support=True, locale=None, default_width=None, decimal_separator=None, thousands_separator=None,
             errors='warn'):
-        
+
         self.color_pre = color_pre
         self.color_post = color_post
         self.fmt_calendar_code = None       # Calendar code from the format string (if any)
@@ -739,7 +744,7 @@ class SSF:
         self.dnthresh = self.getTime(self.basedate)
         self.base1904 = datetime(1900, 3, 1, 0, 0, 0, tzinfo=self._tzinfo)
 
-        self.rgb_colors = ['000000', 
+        self.rgb_colors = ['000000',
                 '000000', 'FFFFFF', 'FF0000', '00FF00', '0000FF', 'FFFF00', 'FF00FF', '00FFFF', '800000', '008000', # 1-10
                 '000080', '808000', '800080', '008080', 'C0C0C0', '808080', '9999FF', '993366', 'FFFFCC', 'CCFFFF', # 11-20
                 '660066', 'FF8080', '0066CC', 'CCCCFF', '000080', 'FF00FF', 'FFFF00', '00FFFF', '800080', '800000', # 21-30
@@ -1006,12 +1011,12 @@ class SSF:
     #for(defi = 67; defi <= 68; ++defi) default_map[defi] = defi - 58;
     for _defi in range(67, 68+1):
         _default_map[_defi] = _defi - 58
-    
+
     #// 72 -> 14 ... 75 -> 17
     #for(defi = 72; defi <= 75; ++defi) default_map[defi] = defi - 58;
     for _defi in range(72, 75+1):
         _default_map[_defi] = _defi - 58
-    
+
     #// 69 -> 12 ... 71 -> 14
     #for(defi = 67; defi <= 68; ++defi) default_map[defi] = defi - 57;
     for _defi in range(67, 68+1):
@@ -1071,7 +1076,7 @@ class SSF:
             A = math.floor(B)
             P = A * P_1 + P_2
             Q = A * Q_1 + Q_2
-            if (B - A) < 0.00000005: 
+            if (B - A) < 0.00000005:
                 break
             B = 1 / (B - A)
             P_2 = P_1; P_1 = P
@@ -1148,7 +1153,7 @@ class SSF:
             #if b2:
                 #dow = SSF._fix_hijri(dt, d, dout)
         out.L, out.e = self._fix_calendar(dout, b2)
-        
+
         out.y = dout[0]
         out.m = dout[1]
         out.d = dout[2]
@@ -1403,7 +1408,7 @@ class SSF:
             o[2] = sns.day
             return (sns.isleap, sns.era)
         return (False, None)                # Not year with leap-month and no era number
-      
+
     #@staticmethod
     #def _fix_hijri(dt,d, o):
       #o[0] -= 581;
@@ -1413,7 +1418,7 @@ class SSF:
       #if dn < 60:           # https://github.com/SheetJS/ssf/issues/58
           #dow = (dow + 6) % 7
       #return dow
-    
+
     #var THAI_DIGITS = "\u0E50\u0E51\u0E52\u0E53\u0E54\u0E55\u0E56\u0E57\u0E58\u0E59".split("");
     #/*jshint -W086 */
     def _write_date(self, type, fmt, val, ss0):
@@ -1599,7 +1604,7 @@ class SSF:
 
         # issues/50 pct1 = r'%'
 
-        # issues/50 def write_num_pct(type, fmt, val):  
+        # issues/50 def write_num_pct(type, fmt, val):
             # issues/50 """The underlying number for the percentages should be physically shifted"""
             # issues/50 #var sfmt = fmt.replace(pct1,""), mul = fmt.length - sfmt.length;
             # issues/50 sfmt = re.sub(pct1, "", fmt)
@@ -1643,7 +1648,7 @@ class SSF:
                            write_num_int('n', m.group('exp'), 0)
                 elif val < 0:
                     return self.fmtl.minus_sign + write_num_exp(fmt, -val)
-                period = fmt.find("."); 
+                period = fmt.find(".");
                 if period == -1:
                     period=fmt.find('E')
                 ee = math.floor(math.log10(val))%period
@@ -1665,9 +1670,9 @@ class SSF:
                         o = re.sub(r'^0+([1-9])',r"\1", o)
                         o = re.sub(r'^0+\.',"0.", o)
                     o = re.sub(r'\+-',"-", o)
-                
+
                 #o = o.replace(/^([+-]?)(\d*)\.(\d*)[Ee]/,function($$,$1,$2,$3) { return $1 + $2 + $3.substr(0,(period+ee)%period) + "." + $3.substr(ee) + "E"; });
-                def sub_f(m): 
+                def sub_f(m):
                     return m.group(1) + m.group(2) + m.group(3)[0:(period+ee)%period] + "." + m.group(3)[ee:] + "E"
                 o = re.sub(r'^([+-]?)(\d*)\.(\d*)[Ee]', sub_f, o)
             else:
@@ -1803,7 +1808,7 @@ class SSF:
                 if val >= 0:
                     return write_num_flt('n', ffmt, val)
                 return '(' + write_num_flt('n', ffmt, -val) + ')'
-            
+
             # Helpers are used for:
             # - Percentage values
             # - Trailing commas
@@ -1835,7 +1840,7 @@ class SSF:
                     o = ""
                 # issues/77 return o if len(o) > len(fmt) else hashq(fmt[:len(fmt)-len(o)]) + o
                 return sign + (o if len(o) > len(fmt) else hashq(fmt[:len(fmt)-len(o)]) + o)    # issues/77
-            
+
             # Fractions with known denominator are resolved by rounding
 
             #if((r = fmt.match(frac1))) return write_num_f1(r, aval, sign);
@@ -1885,7 +1890,7 @@ class SSF:
                     if comma:
                         result = self.fmtl.commaify(result)
                 return sign + result
-            
+
             # The next few simplifications ignore leading optional sigils (`#`)
 
             #fmt = fmt.replace(/^#+([0.])/, "$1");
@@ -1902,7 +1907,7 @@ class SSF:
                     result = m.group(1) + SSF._fill('0', len(r.group(1))-len(m.group(2))) + m.group(2) + m.group(3)
                 result = re.sub(r'^0\.',"0"+self.fmtl.decimal_point if len(r.group(1)) else self.fmtl.decimal_point, result)
                 return result
-            
+
             #if((r = fmt.match(/^#{1,3},##0(\.?)$/))) return sign + commaify(pad0r(aval,0));
             r = re.match(r'^#{1,3},##0(\.?)$', fmt)
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -1937,7 +1942,7 @@ class SSF:
                     return ""
                 result = SSF._strrev(re.sub(r'[0#]',sub_ri, fmt1))
                 return result
-            
+
             # There's a better way to generalize the phone number and other formats in terms
             # of first drawing the digits, but this selection allows for more nuance
 
@@ -1945,7 +1950,7 @@ class SSF:
                 o = write_num_flt(type, "##########", val)
                 #return "(" + o.substr(0,3) + ") " + o.substr(3, 3) + "-" + o.substr(6);
                 return "(" + o[0:3] + ") " + o[3:6] + "-" + o[6:]
-            
+
             # The frac helper function is used for fraction formats (defined below)
 
             oa = ""
@@ -1965,7 +1970,7 @@ class SSF:
                     oa += hashq(r.group(4)[len(oa):])       # issues/75
                 o += oa;
                 return o
-            
+
             #if((r = fmt.match(/^# ([#0?]+)( ?)\/( ?)([#0?]+)/))) {
             r = re.match(r'^# ([#0?]+)( ?)\/( ?)([#0?]+)', fmt) # pragma nocover
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -1987,7 +1992,7 @@ class SSF:
                     return sign + o              # issues/77
                 # issues/77 return hashq(fmt[:len(fmt)-len(o)]) + o
                 return sign + hashq(fmt[:len(fmt)-len(o)]) + o      # issues/77
-            
+
             #if((r = fmt.match(/^([#0?]+)\.([#0]+)$/))) {
             r = re.match(r'^([#0?]+)\.([#0]+)$', fmt)   # pragma nocover
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -2018,7 +2023,7 @@ class SSF:
                 result = re.sub(r'^\d*$',sub_f, result)
                 result += self.fmtl.decimal_point + SSF._pad0(ri,len(r.group(1)))
                 return result
-            
+
             #switch(fmt) {
             #case "###,##0.00": return write_num_flt(type, "#,##0.00", val);
             if fmt == "###,##0.00":     # pragma nocover
@@ -2084,7 +2089,7 @@ class SSF:
                 if period == -1:
                     period=fmt.find('E')
                 ee = math.floor(math.log10(val))%period
-                if ee < 0: 
+                if ee < 0:
                     ee += period
                 #o = (val/Math.pow(10,ee)).toPrecision(idx+1+(period+ee)%period);
                 o = SSF.toPrecision(val/10**ee, idx+1+(period+ee)%period)
@@ -2098,7 +2103,7 @@ class SSF:
                     else:
                         o += "E+" + str(fakee - ee)
                     o = re.sub(r'\+-',"-",o)
-                
+
                 #o = o.replace(/^([+-]?)(\d*)\.(\d*)[Ee]/,function($$,$1,$2,$3) { return $1 + $2 + $3.substr(0,(period+ee)%period) + "." + $3.substr(ee) + "E"; });
                 def sub_f(m):
                     return m.group(1) + m.group(2) + m.group(3)[:(period+ee)%period] + \
@@ -2132,36 +2137,36 @@ class SSF:
             if ord(type[0]) == 40 and not re.search(closeparen, fmt):   # pragma nocover - can't get here
                 #var ffmt = fmt.replace(/\( */,"").replace(/ \)/,"").replace(/\)/,"");
                 ffmt = re.sub(r'\( *',"",fmt).replace(' )',"").replace(')',"")
-                if val >= 0: 
+                if val >= 0:
                     return write_num_int('n', ffmt, val)
                 return '(' + write_num_int('n', ffmt, -val) + ')'
-            
+
             if ord(fmt[-1]) == 44:  # ','
                 return write_num_cm2(type, fmt, val)
-            # issues/50 if fmt.find('%') != -1: 
+            # issues/50 if fmt.find('%') != -1:
                 # issues/50 return write_num_pct2(type, fmt, val)
-            if fmt.find('E') != -1: 
+            if fmt.find('E') != -1:
                 return write_num_exp2(fmt, val)
             if ord(fmt[0]) == 36:   # pragma nocover - can't get here
                 return "$"+write_num_int(type,fmt[2 if fmt[1:2]==' ' else 1:],val)
             aval = abs(val)
             sign = self.fmtl.minus_sign if val < 0 else ""
-            if re.match(r'^00+$', fmt): 
+            if re.match(r'^00+$', fmt):
                 return sign + SSF._pad0(aval,len(fmt))
             if re.match(r'^[#?]+$', fmt):
                 # issues/77  o = SSF.to_str(val)
                 o = SSF.to_str(aval)        # issues/77
-                if val == 0: 
+                if val == 0:
                     o = ""
                 # issues/77 return o if len(o) > len(fmt) else hashq(fmt[:len(fmt)-len(o)]) + o
                 return sign + (o if len(o) > len(fmt) else hashq(fmt[:len(fmt)-len(o)]) + o)    # issues/77
-            
+
             #if((r = fmt.match(frac1))) return write_num_f2(r, aval, sign);
             r = re.search(frac1, fmt)
             if r:
                 return write_num_f2(r, aval, sign);
             #if(fmt.match(/^#+0+$/)) return sign + pad0(aval,fmt.length - fmt.indexOf("0"));
-            if re.match(r'^#+0+$', fmt): 
+            if re.match(r'^#+0+$', fmt):
                 return sign + SSF._pad0(aval,len(fmt) - fmt.find("0"))
             #if((r = fmt.match(dec1))) {
             r = re.search(dec1, fmt)
@@ -2200,7 +2205,7 @@ class SSF:
                     if comma:
                         o = self.fmtl.commaify(o)
                     return sign + (o if fmt.find("0") != -1 else re.sub(r'^0', '', o))
-            
+
             fmt = re.sub(r'^#+([0.])', r"\1", fmt)
             r = re.match(r'^(0*)\.(#*)$', fmt)
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -2212,9 +2217,9 @@ class SSF:
                     result = m.group(1) + SSF._fill('0', len(r.group(1))-len(m.group(2))) + m.group(2) + m.group(3)
                 result = re.sub(r'^0\.',"0." if len(r.group(1)) else ".", result)
                 return sign + result.replace(".", self.fmtl.decimal_point)
-            
+
             #if((r = fmt.match(/^#{1,3},##0(\.?)$/))) return sign + commaify((""+aval));
-            r = re.match(r'^#{1,3},##0(\.?)$', fmt) 
+            r = re.match(r'^#{1,3},##0(\.?)$', fmt)
             if r:   # pragma nocover - can't get here - covered by the general case above!
                 return sign + self.fmtl.commaify(SSF.to_str(aval))
             #if((r = fmt.match(/^#,##0\.([#0]*0)$/))) {
@@ -2222,7 +2227,7 @@ class SSF:
             if r:   # pragma nocover - can't get here - covered by the general case above!
                 #return val < 0 ? "-" + write_num_int(type, fmt, -val) : commaify((""+val)) + "." + fill('0',r[1].length);
                 return "-" + write_num_int(type, fmt, -val) if val < 0 else self.fmtl.commaify(SSF.to_str(val)) + self.fmtl.decimal_point + SSF._fill('0',len(r.group(1)))
-            
+
             #if((r = fmt.match(/^#,#*,#0/))) return write_num_int(type,fmt.replace(/^#,#*,/,""),val);
             r = re.match(r'^#,#*,#0', fmt)
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -2244,11 +2249,11 @@ class SSF:
                     return '0' if m.group(0)=='0' else ''
                 result = SSF._strrev(re.sub(r'[0#]', sub_f, fmt1))
                 return result
-            
+
             if re.search(phone, fmt):
                 o = write_num_int(type, "##########", val)
                 return "(" + o[:3] + ") " + o[3:6] + "-" + o[6:]
-            
+
             oa = ""
             #if((r = fmt.match(/^([#0?]+)( ?)\/( ?)([#0?]+)/))) {
             r = re.match(r'^([#0?]+)( ?)\/( ?)([#0?]+)', fmt)
@@ -2258,16 +2263,16 @@ class SSF:
                 o = sign
                 oa = self._write_num("n", r.group(1), ff[1])
                 #if(oa.charAt(oa.length-1) == " ") oa = oa.substr(0,oa.length-1) + "0";
-                if oa[-1] == " ": 
+                if oa[-1] == " ":
                     oa = oa[:-1] + "0"
                 o += oa + r.group(2) + "/" + r.group(3)
                 oa = SSF._rpad(ff[2],ri)
                 #if(oa.length < r[4].length) oa = hashq(r[4].substr(r[4].length-oa.length)) + oa;
-                if len(oa) < len(r.group(4)): 
+                if len(oa) < len(r.group(4)):
                     oa = hashq(r.group(4)[len(r.group(4))-len(oa)]) + oa
                 o += oa
                 return o
-            
+
             #if((r = fmt.match(/^# ([#0?]+)( ?)\/( ?)([#0?]+)/))) {
             r = re.match(r'^# ([#0?]+)( ?)\/( ?)([#0?]+)', fmt) # pragma nocover
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -2275,7 +2280,7 @@ class SSF:
                 ff = SSF._frac(aval, 10**ri-1, True)
                 return sign + SSF.to_str(ff[0] or ("" if ff[1] else "0")) + " " + \
                   (SSF._pad(ff[1],ri) + r.group(2) + "/" + r.group(3) + SSF._rpad(ff[2],ri) if ff[1] else SSF._fill(" ", 2*ri+1 + len(r.group(2)) + len(r.group(3))))
-            
+
             #if((r = fmt.match(/^[#0?]+$/))) {
             r = re.match(r'^[#0?]+$', fmt)  # pragma nocover
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -2283,7 +2288,7 @@ class SSF:
                 if len(fmt) <= len(o):
                     return o
                 return hashq(fmt[:len(fmt)-len(o)]) + o
-            
+
             #if((r = fmt.match(/^([#0]+)\.([#0]+)$/))) {
             r = re.match(r'^([#0]+)\.([#0]+)$', fmt)    # pragma nocover
             if r:   # pragma nocover - can't get here - covered by the general case above!
@@ -2294,13 +2299,13 @@ class SSF:
                 lres = fmt.find(".") - ri
                 rres = len(fmt) - len(o) - lres
                 return hashq(fmt[:lres] + o + fmt[len(fmt)-rres:]).replace(".", self.fmtl.decimal_point)
-            
+
             #if((r = fmt.match(/^00,000\.([#0]*0)$/))) {
             r = re.match(r'^00,000\.([#0]*0)$', fmt)    # pragma nocover
             if r:   # pragma nocover - can't get here - covered by the general case above!
                 #return val < 0 ? "-" + write_num_int(type, fmt, -val) : commaify(""+val).replace(/^\d,\d{3}$/,"0$&").replace(/^\d*$/,function($$) { return "00," + ($$.length < 3 ? pad0(0,3-$$.length) : "") + $$; }) + "." + pad0(0,r[1].length);
                 if val < 0:
-                    result = "-" + write_num_int(type, fmt, -val) 
+                    result = "-" + write_num_int(type, fmt, -val)
                 else:
                     result = self.fmtl.commaify(SSF.to_str(val))
                     result = re.sub(r'^(\d,\d{3})$',r"0\1", result)
@@ -2309,7 +2314,7 @@ class SSF:
                         return "00," + (SSF._pad0(0,3-lm) if lm < 3 else "") + m.group(0)
                     result = re.sub(r'^\d*$',sub_f, result) + self.fmtl.decimal_point + SSF._pad0(0,len(r.group(1)))
                 return result
-            
+
             #switch(fmt) {
             #case "###,###":
             #case "##,###":
@@ -2321,7 +2326,7 @@ class SSF:
                 return sign + x if x != "0" else ""
             elif re.search(r'\.[0#?]*$', fmt):  # pragma nocover
                 return write_num_int(type, fmt[:fmt.rfind(".")], val) + hashq(fmt[fmt.rfind("."):]).replace(".", self.fmtl.decimal_point)
-            
+
             self._value_error("unsupported format |" + fmt + "|")
             return ''
 
@@ -2377,7 +2382,7 @@ class SSF:
                 out.append(fmt[j:i])
                 j = i+1
             i += 1
-        
+
         out.append(fmt[j:])
         if in_str:
             self._value_error("Format |" + fmt + "| unterminated string ")
@@ -2525,7 +2530,7 @@ class SSF:
             #default: ++i; break;
             else:
                 i += 1
-                
+
         return False;
 
     is_date = fmt_is_date
@@ -2637,7 +2642,7 @@ class SSF:
             c = fmt[i]
             #case 'G': /* General */
             if c == 'G':
-                if not SSF._isgeneral(fmt, i): 
+                if not SSF._isgeneral(fmt, i):
                     self._value_error('unrecognized character ' + c + ' in ' +fmt)
                 out.append(SimpleNamespace(t='G', v='General'))
                 i+=7
@@ -2685,7 +2690,7 @@ class SSF:
             #case 'B': case 'b':
             elif c in ('B', 'b'):
                 if fmt[i+1:i+2] in ("1", "2"):
-                    if dt is None: 
+                    if dt is None:
                         dt=self._parse_date_code(v, opts, fmt[i+1:i+2] == "2")
                         if dt is None:
                             #return ""
@@ -2701,24 +2706,24 @@ class SSF:
                 #/* falls through */
             #case 'm': case 'd': case 'y': case 'h': case 's': case 'e': case 'g':
             if c in ('b', 'm', 'd', 'y', 'h', 's', 'e', 'g'):
-                if v < 0: 
+                if v < 0:
                     #return ""
                     return SSF._pounds(wid)
                 if dt is None:
-                    dt=self._parse_date_code(v, opts) 
+                    dt=self._parse_date_code(v, opts)
                     if dt is None:
                         #return ""
                         return SSF._pounds(wid)
                 if c == 'g':
                     got_g = True
-                o = c; 
+                o = c;
                 i += 1
-                while i < len(fmt) and fmt[i].lower() == c: 
+                while i < len(fmt) and fmt[i].lower() == c:
                     o+=c
                     i += 1
-                if c == 'm' and lst.lower() == 'h': 
+                if c == 'm' and lst.lower() == 'h':
                     c = 'M'
-                if c == 'h': 
+                if c == 'h':
                     c = hr
                 if c == 'y' and got_g:
                     c = 'e'                 # Change 'y' to 'e' (era) after seeing a 'g'
@@ -2727,14 +2732,14 @@ class SSF:
                 lst = c
                 continue
             #case 'A': case 'a': case '上':
-            elif c in ('A', 'a', '上'): 
+            elif c in ('A', 'a', '上'):
                 q=SimpleNamespace(t=c, v=c)
                 if dt is None:
                     dt=self._parse_date_code(v, opts)
                 # The rule regarding `A/P` and `AM/PM` is that if they show up
                 # in the format then _all_ instances of `h` are considered 12-hour and not 24-hour
                 # format (even in cases like `hh AM/PM hh hh hh`)
-                if fmt[i:i+3].upper() == "A/P": 
+                if fmt[i:i+3].upper() == "A/P":
                     if dt is not None:
                         if dt.H < 12:   # Morning   # https://github.com/SheetJS/ssf/issues/8
                             q.v = self.tmpl.a.lower() if c == 'a' else self.tmpl.a.upper()  # https://github.com/SheetJS/ssf/issues/54
@@ -2749,7 +2754,7 @@ class SSF:
                     q.t = 'T'
                     i+=5
                     hr='h'
-                elif fmt[i:i+5].upper() == "上午/下午": 
+                elif fmt[i:i+5].upper() == "上午/下午":
                     if dt is not None:
                         q.v = "下午" if dt.H >= 12 else "上午"
                     q.t = 'T'
@@ -2758,7 +2763,7 @@ class SSF:
                 else:
                     q.t = "t"
                     i += 1
-                if dt is None and q.t == 'T': 
+                if dt is None and q.t == 'T':
                     #return ""
                     return SSF._pounds(wid)
                 out.append(q)
@@ -2777,7 +2782,7 @@ class SSF:
                 o = fmt[i:j+1]
                 i = j+1
                 if re.match(SSF._abstime, o):
-                    if dt is None: 
+                    if dt is None:
                         dt=self._parse_date_code(v, opts, abstime=True)
                         abstime = True
                         if dt is None:
@@ -2805,8 +2810,8 @@ class SSF:
                                     else:
                                         # Locales specified in format codes do NOT override the decimal_point or
                                         # the thousands_sep:
-                                        self.tmpl = self._get_locale(locale_id, 
-                                            decimal_separator=self.fmtl.decimal_point, 
+                                        self.tmpl = self._get_locale(locale_id,
+                                            decimal_separator=self.fmtl.decimal_point,
                                             thousands_separator=self.fmtl.thousands_sep,
                                             calendar_code=self.fmt_calendar_code)
                                 else:
@@ -2821,7 +2826,7 @@ class SSF:
                                     self.fmt_calendar_code = xxyy & 0x7f
                                 if locale_split[0]:                             # Issue #8
                                     self.tmpl = self._get_locale(locale_split[0],
-                                            decimal_separator=self.fmtl.decimal_point, 
+                                            decimal_separator=self.fmtl.decimal_point,
                                             thousands_separator=self.fmtl.thousands_sep,
                                             calendar_code=self.fmt_calendar_code)
 
@@ -2829,7 +2834,7 @@ class SSF:
                                 self.tmpl = copy(self.tmpl)
                                 self.tmpl.dbnum = self.fmtl.dbnum
                                 self.tmpl.numbers_xx = xx
-                                
+
                             #currency_string = m.group(1)
                             #if currency_string:
                                 #self.fmtl = copy(self.fmtl)
@@ -2842,7 +2847,7 @@ class SSF:
                         o = m.group(1)
                     else:
                         o = "$"
-                    if not SSF.fmt_is_date(fmt): 
+                    if not SSF.fmt_is_date(fmt):
                         out.append(SimpleNamespace(t='t',v=o))
                 elif SSF._negcond(re.match(SSF._cfregex2, o)):    # https://github.com/SheetJS/ssf/issues/52
                     v = abs(v)      # If this specifies absolutely a negative conditional, then eat the sign of the value
@@ -3019,7 +3024,7 @@ class SSF:
                 ssm = re.search(r'\.0+$', out[i].v)
                 if ssm:
                     ss0=max(ss0,len(ssm.group(0))-1)
-                if bt < 3: 
+                if bt < 3:
                     bt = 3
             #/* falls through */
             #case 'd': case 'y': case 'M': case 'e': lst=out[i].t; break;
@@ -3041,7 +3046,7 @@ class SSF:
             elif oit == 'Z':
                 bt = 1
                 continue
-        
+
         # WRONG: /* time rounding depends on presence of minute / second / usec fields */
         # Time rounding depends on the length of the usec field
         #switch(bt) {
@@ -3049,7 +3054,7 @@ class SSF:
         #case 1:
         if bt != 0:
             dt.u = SSF.round(dt.u, ss0)
-            if dt.u >= 1 or dt.u <= -1:  
+            if dt.u >= 1 or dt.u <= -1:
                 v = (((dt.D*24+dt.H)*60+dt.M)*60+dt.S+dt.u) / 86400.0
                 dt=self._parse_date_code(v, opts, b2, abstime)
                 if dt is None:
@@ -3102,7 +3107,7 @@ class SSF:
                     # issues/74 jj += 1
                     # issues/74 if jj < len(out) and out[jj]:
                         # issues/74 c = out[jj].t
-                
+
                 nstr += out[i].v                    # issues/74
                 jj = i+1                            # issues/74: Combine all number pieces
                 while jj < len(out):
@@ -3173,7 +3178,7 @@ class SSF:
                 if myv < 0 and out[0] and out[0].t == 't':
                     ostr = ostr[1:]
                     out[0].v = self.fmtl.minus_sign + out[0].v
-                
+
             ostr = self._replace_numbers(ostr)
 
             jj=len(ostr)-1
@@ -3192,21 +3197,21 @@ class SSF:
                 slash_loc = -1
                 pcolon = ostr.find(':')
                 for i in reversed(range(len(out))):
-                    # issues/74 if out[i] is None or 'n?'.find(out[i].t) == -1: 
+                    # issues/74 if out[i] is None or 'n?'.find(out[i].t) == -1:
                     if out[i] is None or 'nD/:'.find(out[i].t) == -1:     # issues/74
                         continue
                     if out[i].t == ':':      # Marker which starts the fraction part
-                        if jj>=0 and lasti<len(out): 
+                        if jj>=0 and lasti<len(out):
                             out[lasti].v = ostr[pcolon+1:jj+1] + out[lasti].v
                             jj = pcolon-1
                     if '/' in out[i].v:
                         slash_loc = i
-                    if jj>=len(out[i].v)-1: 
-                        jj -= len(out[i].v) 
+                    if jj>=len(out[i].v)-1:
+                        jj -= len(out[i].v)
                         out[i].v = ostr[jj+1:jj+1+len(out[i].v)]
-                    elif jj < 0: 
+                    elif jj < 0:
                         out[i].v = ""
-                    else: 
+                    else:
                         out[i].v = ostr[:jj+1]
                         jj = -1
                     out[i].t = 't'
@@ -3220,8 +3225,8 @@ class SSF:
                         found_non_blank = True
                         blanked_start = i+1
                     lasti = i
-                
-                if jj>=0 and lasti<len(out): 
+
+                if jj>=0 and lasti<len(out):
                     out[lasti].v = ostr[:jj+1] + out[lasti].v
 
                 if blanked_start is not None and blanked_start <= slash_loc <= blanked_end:   # issues/60
@@ -3230,37 +3235,37 @@ class SSF:
                         out[i].v = ' ' * len(out[i].v)
 
             # Otherwise we have to do something a bit trickier
-            
+
             elif decpt != len(out) and ostr.find(self.fmtl.exponential) == -1:
                 jj = ostr.find(self.fmtl.decimal_point)-1
                 for i in reversed(range(decpt+1)):
-                    if out[i] is None or 'n?'.find(out[i].t) == -1: 
+                    if out[i] is None or 'n?'.find(out[i].t) == -1:
                         continue
                     j=out[i].v.find(".")-1 if out[i].v.find(".")>-1 and i==decpt else len(out[i].v)-1
                     vv = out[i].v[j+1:].replace(".", self.fmtl.decimal_point)
                     #for(; j>=0; --j) {
                     for j in reversed(range(j+1)):
-                        if jj>=0 and (out[i].v[j] == "0" or out[i].v[j] == "#"): 
+                        if jj>=0 and (out[i].v[j] == "0" or out[i].v[j] == "#"):
                             vv = ostr[jj] + vv
                             jj -= 1
-                    
+
                     out[i].v = vv
                     out[i].t = 't'
                     lasti = i
-                
-                if jj>=0 and lasti<len(out): 
+
+                if jj>=0 and lasti<len(out):
                     out[lasti].v = ostr[:jj+1] + out[lasti].v
                 jj = ostr.find(self.fmtl.decimal_point)+1
                 dp = self.fmtl.decimal_point
                 for i in range(decpt, len(out)):
-                    if out[i] is None or ('n?('.find(out[i].t) == -1 and i != decpt): 
+                    if out[i] is None or ('n?('.find(out[i].t) == -1 and i != decpt):
                         continue
                     j=out[i].v.find(dp)+1 if out[i].v.find(dp)>-1 and i==decpt else 0
                     dp = "."
                     vv = out[i].v[:j]
                     #for(; j<out[i].v.length; ++j) {
                     for j in range(j, len(out[i].v)):
-                        if jj<len(ostr): 
+                        if jj<len(ostr):
                             vv += ostr[jj]
                             jj += 1
                     out[i].v = vv
@@ -3289,7 +3294,7 @@ class SSF:
                         out[i].v = ostr[j:jj]
                         out[i].t = 't'
                         jj = j
-                
+
         # The magic in the next line is to ensure that the negative number is passed as
         # positive when there is an explicit hyphen before it (e.g. `#,##0.0;-#,##0.0`)
 
@@ -3331,7 +3336,7 @@ class SSF:
 
         retval = ""
         for i in range(len(out)):
-             if out[i] is not None: 
+             if out[i] is not None:
                  retval += out[i].v
 
         if wid is not None and is_number and len(retval) > wid:
@@ -3356,7 +3361,7 @@ class SSF:
 
     @staticmethod
     def _chkcond(v, rr):      # rr is a match object
-        if rr is None: 
+        if rr is None:
             return False
         thresh = float(rr.group(2))
         op = rr.group(1)
@@ -3424,9 +3429,9 @@ class SSF:
         fmt = self._split_fmt(f)
         l = len(fmt)
         lat = fmt[-1].find("@")
-        if l<4 and lat>-1: 
+        if l<4 and lat>-1:
             l -= 1
-        if len(fmt) > 4: 
+        if len(fmt) > 4:
             self._value_error("cannot find right format for |" + "|".join(fmt) + "|")
         #if(typeof v !== "number") return [4, fmt.length === 4 || lat>-1?fmt[fmt.length-1]:"@"];
         if isinstance(v, bool) or not isinstance(v, (int, float)):      # isinstance(True, int) is True!!
@@ -3443,7 +3448,7 @@ class SSF:
         elif lf == 3:
             fmt = [fmt[0], fmt[1], fmt[0], fmt[2]] if lat>-1 else [fmt[0], fmt[1], fmt[2], "@"]
         #case 4: break;
-        
+
         ff = fmt[0] if v > 0 else fmt[1] if v < 0 else fmt[2]
         m1 = re.search(SSF._cfregex2, fmt[0])
         m2 = re.search(SSF._cfregex2, fmt[1])
@@ -3468,7 +3473,7 @@ class SSF:
             elif v < 0:
                 self._pound_sand = True
             return [l, fmt[2 if m1 is not None and m2 is not None else 1]]
-        
+
         return [l, ff]
 
     @staticmethod
@@ -3564,16 +3569,16 @@ class SSF:
     def _get_currency_format(self, places, negative_numbers, use_thousands_separator=False, accounting=False):
         """Internal routine to compute an appropriate format for formatting currency.  ``places`` specifies the
         number of places after the decimal - if None, then the default is used.  ``negative_numbers`` specifies
-        how to format negative numbers.  It can be None, which uses the locale-specified positioning, 
-        a minus sign, `Red`, which formats in red without a minus sign, `parens` which formats in parenthesis, 
-        or `Redparens`, which does both red and parenthesis.  
-        For currencies, these additional ``negative_numbers`` formats are supported: 
-        
+        how to format negative numbers.  It can be None, which uses the locale-specified positioning,
+        a minus sign, `Red`, which formats in red without a minus sign, `parens` which formats in parenthesis,
+        or `Redparens`, which does both red and parenthesis.
+        For currencies, these additional ``negative_numbers`` formats are supported:
+
         * `<<-` - The sign should precede the value and currency symbol (`-` does this too)
         * `>>-` - The sign should follow the value and currency symbol
         * `<-`  - The sign should immediately precede the value
         * `>-`  - The sign should immediately follow the value
-        
+
         If ``use_thousands_separator``, then a locale-based comma
         is used to group the digits before the decimal point.  If ``accounting`` is true then an appropriate accounting format is used.
         """
@@ -3599,7 +3604,7 @@ class SSF:
                     negative_numbers = '-'
                 if negative_numbers is not None:
                     nnl = negative_numbers.lower()
-                    neg_map = {'-': 1, '<<-': 1, '>>-': 2, '<-': 3, '>-': 4, 'paren': 0, 'parens': 0, 
+                    neg_map = {'-': 1, '<<-': 1, '>>-': 2, '<-': 3, '>-': 4, 'paren': 0, 'parens': 0,
                             '()': 0, 'redparens': 0, 'redparen': 0, 'red()': 0, '(': 0, 'red(': 0}
                     sign_posn = neg_map.get(nnl, sign_posn)
             ndx = (sign_posn << 2) + (cs_precedes << 1) + sep_by_space  # 0..19
@@ -3618,10 +3623,10 @@ class SSF:
             # Currency: $#,##0.00
             # Currency with (...) for negative: $#,##0.00_);($#,##0.00)
             # Accounting: _($* #,##0.00_);_($* (#,##0.00);_($* "-"??_);_(@_)
-            # Accounting with space: _ [$₹-445] * #,##0.00_ ;_ [$₹-445] * -#,##0.00_ ;_ [$₹-445] * "-"??_ ;_ @_ 
+            # Accounting with space: _ [$₹-445] * #,##0.00_ ;_ [$₹-445] * -#,##0.00_ ;_ [$₹-445] * "-"??_ ;_ @_
             # Accounting with Euro on right: _-* #,##0.00 [$€-483]_-;-* #,##0.00 [$€-483]_-;_-* "-"?? [$€-483]_-;_-@_-
-            # Ditto:                         _ * #,##0.00_) [$€-1]_ ;_ * (#,##0.00) [$€-1]_ ;_ * "-"??_) [$€-1]_ ;_ @_ 
-            # With '-' on right:             _ * #,##0.00_-[$₹-44D]_ ;_ * #,##0.00-[$₹-44D]_ ;_ * "-"??_-[$₹-44D]_ ;_ @_ 
+            # Ditto:                         _ * #,##0.00_) [$€-1]_ ;_ * (#,##0.00) [$€-1]_ ;_ * "-"??_) [$€-1]_ ;_ @_
+            # With '-' on right:             _ * #,##0.00_-[$₹-44D]_ ;_ * #,##0.00-[$₹-44D]_ ;_ * "-"??_-[$₹-44D]_ ;_ @_
             fmt = '0'
             if use_thousands_separator or use_thousands_separator is None:
                 fmt = '#,##0'
@@ -3684,7 +3689,7 @@ class SSF:
         r = re.sub(r'^([^;]+);-\1;\1;@$', r'\1', r)         # Simplify result if all the same
         return r
 
-    def get_format(self, type='General', places=None, use_thousands_separator=None, 
+    def get_format(self, type='General', places=None, use_thousands_separator=None,
             negative_numbers=None, fraction_denominator=-1, positive_sign_exponent=True, locale=None):
         """Get an appropriate format for the ``locale`` either specified here or the locale of
         the ``ssf`` object.  The ``type`` is one of General, Number, Currency, Accounting,
@@ -3695,17 +3700,17 @@ class SSF:
         is used.  For currency and accounting formats, ``use_thousands_separator`` defaults
         to `True`.  In addition, ``negative_numbers`` specifies how to format negative numbers.
         It can be None, which uses a default format depending on the type (normally '-'),
-        or `-`, which always uses a minus sign, `Red`, which formats in red without a minus 
+        or `-`, which always uses a minus sign, `Red`, which formats in red without a minus
         sign, `parens` which formats in parenthesis, or `Redparens`, which does both red and
         parenthesis.  You can also specify `()` as a synonym for `parens`.
 
-        For currencies, these additional ``negative_numbers`` formats are supported: 
-        
+        For currencies, these additional ``negative_numbers`` formats are supported:
+
         * ``<<-`` The sign should precede the value and currency symbol (``-`` does this too)
         * ``>>-`` The sign should follow the value and currency symbol
         * ``<-``  The sign should immediately precede the value
         * ``>-``  The sign should immediately follow the value
-        
+
         For Fraction formats, the ``fraction_denominator`` specifies the
         denominator to be used for the fraction.  If it is negative, then it instead
         specifies how many digits to use in the numerator.  If it is zero, then
@@ -3786,8 +3791,8 @@ class SSF:
 
     def format(self, fmt, v, width=None, align=None, locale=None, decimal_separator=None, thousands_separator=None):
         """Format a value ``v`` according to the spreadsheet format in ``fmt`` with field ``width`` with alignment
-        ``align``.  If ``width`` is not specified, then the `default_width` from the `ssf` object is used.  
-        The ``align`` can be specified as 'left', 'right', 'center' or None.  If ``align`` is None, the 
+        ``align``.  If ``width`` is not specified, then the `default_width` from the `ssf` object is used.
+        The ``align`` can be specified as 'left', 'right', 'center' or None.  If ``align`` is None, the
         alignment is defaulted by the type of the value and the format.  Text is left aligned, numbers and dates are
         right aligned, and bool's are centered.  If the format is a text format (``@``), then the default is left
         aligned for all types of values.  If ``locale`` is not None and the ``ssf`` object supports locale, then
@@ -3817,16 +3822,16 @@ class SSF:
         #switch(typeof fmt) {
         #case "string":
         if isinstance(fmt, str):
-            if (fmt == "m/d/yy" or fmt == "m/d/yyyy") and o.dateNF: 
+            if (fmt == "m/d/yy" or fmt == "m/d/yyyy") and o.dateNF:
                 sfmt = o.dateNF
             elif fmt.title() in SSF._formats:
                 sfmt = self.get_format(fmt, locale=locale)
-            else: 
+            else:
                 sfmt = fmt
         #case "number":
         elif isinstance(fmt, int):
             sfmt = None
-            if fmt == 14 and o.dateNF: 
+            if fmt == 14 and o.dateNF:
                 sfmt = o.dateNF
             else:
                 try:
@@ -3843,9 +3848,9 @@ class SSF:
                     sfmt = SSF._default_str[fmt]
                 except (KeyError, IndexError):
                     sfmt = "General"
-        
+
         try:
-            #issues/48 if self.isgeneral(sfmt,0): 
+            #issues/48 if self.isgeneral(sfmt,0):
                 #issues/48 return self._general_fmt(v, o, width, align=align)
             ov = v      # issues/48
             if SSF.fmt_is_date(sfmt) and isinstance(v, str):
@@ -3853,16 +3858,16 @@ class SSF:
                     v = date_parse(v)
                 except Exception:
                     pass
-            if isinstance(v, date) or isinstance(v, tm) or isinstance(v, timedelta): 
+            if isinstance(v, date) or isinstance(v, tm) or isinstance(v, timedelta):
                 v = self._datenum_local(v, o.date1904)
             f = self._choose_fmt(sfmt, v)
-            if self._isgeneral(f[1]): 
+            if self._isgeneral(f[1]):
                 #issues/48 return self._general_fmt(v, o, width, '@' in sfmt, align)
                 return self._general_fmt(ov, o, width, '@' in sfmt, align)   # issues/48
             #center = False
             #if isinstance(v, bool):
                 #if v:
-                    #v = "TRUE" 
+                    #v = "TRUE"
                 #else:
                     #v = "FALSE"
                 #center = True
@@ -3950,16 +3955,16 @@ class SSF:
                 idx = -1
 
             for i in range(0x0188):
-                if i not in self.table_fmt:   
-                    if idx < 0:  
+                if i not in self.table_fmt:
+                    if idx < 0:
                         idx = i
                         continue
-                if self.table_fmt.get(i) == fmt: 
+                if self.table_fmt.get(i) == fmt:
                     idx = i
                     break
-            if idx < 0: 
+            if idx < 0:
                 idx = 0x187
-        
+
         self.table_fmt[idx] = fmt
         return idx
 

@@ -3,7 +3,7 @@
 #var SSF = require('../');
 from ssf import SSF
 import json
-ssf = SSF(dateNF='m/d/yy')  # Match the (old) format of the test data
+ssf = SSF(dateNF='m/d/yy', locale='en_US')  # Match the (old) format of the test data
 #ssf.load('m/d/yy', 14)
 #var fs = require('fs'), assert = require('assert');
 #var data = JSON.parse(fs.readFileSync('./test/implied.json','utf8'));

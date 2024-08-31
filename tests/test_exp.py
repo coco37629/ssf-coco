@@ -2,7 +2,7 @@
 #/*jshint loopfunc:true, mocha:true, node:true */
 #var SSF = require('../');
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 #var fs = require('fs');
 #var data = fs.readFileSync('./test/exp.tsv','utf8').split("\n");
 with open('tests/exp.tsv', 'r', encoding='utf-8') as d:

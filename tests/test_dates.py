@@ -3,7 +3,7 @@
 #/*jshint loopfunc:true, mocha:true, node:true, evil:true */
 #var SSF = require('../');
 from ssf import SSF
-ssf = SSF()
+ssf = SSF(locale='en_US')
 ssf1904 = SSF(date1904=True)
 #var fs = require('fs'), assert = require('assert');
 #var data = JSON.parse(fs.readFileSync('./test/date.json','utf8'));

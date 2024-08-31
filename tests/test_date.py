@@ -8,7 +8,7 @@ import random
 import re
 from datetime import timedelta, datetime
 import gzip
-ssf = SSF()
+ssf = SSF(locale='en_US')
 SKIP=500
 START_SKIPPING_AT=50
 #var fs = require('fs'), assert = require('assert');
@@ -136,7 +136,7 @@ def test_bad_date_formats():
             return False
         except Exception:
             return True
-            
+
     for fmt in bad:
         assert chk(fmt)
 #    bad.forEach(function(fmt){assert.throws(chk(fmt));});
