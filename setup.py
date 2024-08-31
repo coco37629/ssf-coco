@@ -36,7 +36,7 @@ setup(
     long_description=readme + '\n\n' + history,
     include_package_data=True,
     keywords='ssf',
-    name='ssf',
+    name='ssf-reducto',
     packages=find_packages(include=['ssf', 'ssf.*']),
     package_data = {
         '':['*.json', '*.tsv', '*.yaml', '*.gz', '*.bin']
@@ -44,7 +44,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/snoopyjc/ssf',
+    url='https://github.com/reductoai/ssf-reducto',
     version='0.2.2',
     zip_safe=False,
 )
