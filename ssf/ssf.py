@@ -22,7 +22,6 @@ import gzip
 from convertdate import hebrew, islamic
 #from lunarcalendar import Solar, Converter
 import mmap
-from ummalqura.hijri_date import HijriDate
 
 class SSF_CALENDAR:         # Issue #6
     """Handle alternative calendars for ssf.  This shouldn't be used directly."""
@@ -160,40 +159,6 @@ class SSF_CALENDAR:         # Issue #6
 
     um_bin = None           # Issue #15
 
-    def to_um_al_qura(self, ymd):     # 0x17: See https://pypi.org/project/ummalqura/
-        ymd = self.fixup_special(ymd)      # Issue #14
-        if ymd[0] < 1937 or (ymd[0] == 1937 and (ymd[1] < 3 or (ymd[1] == 3 and ymd[2] <= 13))):    # Issue #15
-            #
-            # We use our own converter to match what Excel does in the range 1900-01-01 - 1937-03-12,
-            # since the ummalqura doesn't cover that date period.
-            # umcal.bin is a binary file containing 2 bytes per date since the epoch (1/1/1900)
-            # This 16-bit value is encoded as follows:
-            #
-            # 0             7       11    16
-            # | offset_year | month | day |
-            # |<   7 bits  >|< 4b  >|< 5b>|
-            #
-            # Where offset_year is year-1317
-            #
-            if SSF_CALENDAR.um_bin is None:     # Runs exactly once
-                umcal_file = os.path.join(os.path.dirname(__file__), 'umcal.bin')
-                if os.path.isfile(umcal_file):
-                    with open(umcal_file, 'rb') as uf:
-                        SSF_CALENDAR.um_bin = uf.read()
-            base = date(1900, 1, 1)
-            delta = (date(*ymd) - base).days
-            ndx = delta * 2
-            try:
-                value = int.from_bytes(SSF_CALENDAR.um_bin[ndx:ndx+2], byteorder='big')
-            except Exception:
-                value = 0
-            return SimpleNamespace(year=(value>>9)+1317, month=(value>>5)&0xF,
-                                   day=value&0x1F, isleap=calendar.isleap(ymd[0]), era=None)
-
-        result = HijriDate(*ymd, gr=True)
-        # Leap year corresponds to the Gregorian calendar and adds a 30th day to the 6th month
-        return SimpleNamespace(year=result.year, month=result.month, day=result.day, isleap=calendar.isleap(ymd[0]), era=None)
-
     def month_names(self, locale_name, isleap=False):
         """Return the month names for this calendar in the given ``locale_name``.  The result
         is an array of month names, starting with January in index 0, or None if
@@ -238,7 +203,7 @@ class SSF_CALENDAR:         # Issue #6
         _calendar_converter = [None, None, None, self.to_japanese, self.to_taiwan, self.to_korean,
             self.to_hijri, self.to_thai_buddhist, self.to_jewish, None, None, None, None, None, self.to_lunar_x0e,
             None, None, self.to_lunar_x11, self.to_lunar_x12, self.to_chinese_lunar, None, None, None,
-            self.to_um_al_qura, None, None, None, None, None, None, None, None]
+            None, None, None, None, None, None, None, None, None]
         self.converter = self.to_default
         try:
             converter = _calendar_converter[calendar]
