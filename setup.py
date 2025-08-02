@@ -10,7 +10,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['Babel', 'python-dateutil', 'pytz', 'PyYAML', 'six', 'ummalqura', 'convertdate']
+requirements = ['Babel', 'python-dateutil', 'pytz', 'PyYAML', 'six', 'convertdate']
 
 setup_requirements = ['pytest-runner', ]
 
@@ -45,6 +45,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/coco37629/ssf-coco',
-    version='0.2.3',
+    version='0.2.4',
     zip_safe=False,
 )

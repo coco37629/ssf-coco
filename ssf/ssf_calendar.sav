@@ -5,7 +5,6 @@ import gzip
 from dateutil.parser import parse as date_parse
 from convertdate import hebrew, islamic
 from lunarcalendar import Solar, Converter
-from ummalqura.hijri_date import HijriDate
 
 class SSF_CALENDAR:
     """Handle alternative calendars for ssf.  This shouldn't be used directly."""
@@ -100,11 +99,6 @@ class SSF_CALENDAR:
     def to_chinese_lunar(self, ymd):      # 0x13 - Same as x11
         return self.to_lunar_x0e(ymd)
 
-    def to_um_al_qura(self, ymd):     # 0x17: See https://pypi.org/project/ummalqura/
-        result = HijriDate(*ymd, gr=True)
-        # Leap year corresponds to the Gregorian calendar and adds a 30th day to the 6th month
-        return SimpleNamespace(year=result.year, month=result.month, day=result.day, isleap=calendar.isleap(ymd[0]))
-
     def month_names(self, locale_name, isleap=False):
         """Return the month names for this calendar in the given ``locale_name``.  The result
         is an array of month names, starting with January in index 0, or None if
@@ -144,7 +138,7 @@ class SSF_CALENDAR:
         _calendar_converter = [None, None, None, to_japanese, to_taiwan, to_korean,
             to_hijri, to_thai_buddhist, to_jewish, None, None, None, None, None, to_lunar_x0e,
             None, None, to_lunar_x11, to_lunar_x12, to_chinese_lunar, None, None, None, 
-            to_um_al_qura, None, None, None, None, None, None, None, None]
+            None, None, None, None, None, None, None, None, None]
         self.converter = self.to_default
         try:
             converter = _calendar_converter[calendar]

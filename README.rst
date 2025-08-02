@@ -37,8 +37,7 @@ Python Version and Required Libraries
 -------------------------------------
 
 A modern version of Python is required to use `ssf`: version 3.6 or better.
-Also, these libraries are required by `ssf`: `Babel`, `python-dateutil`, `pytz`, `pyYAML`, `six`,
-`ummalqura`, `convertdate`.
+Also, these libraries are required by `ssf`: `Babel`, `python-dateutil`, `pytz`, `pyYAML`, `six`, `convertdate`.
 
 Example
 -------

@@ -2,7 +2,6 @@ from openpyxl import Workbook
 #from lunarcalendar import Solar, Converter
 from datetime import date, timedelta
 from convertdate import islamic
-from ummalqura.hijri_date import HijriDate
 
 um = [0x17, 0x06]
 
